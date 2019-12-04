@@ -49,97 +49,118 @@ You can uninstall the software run the following command:
 
 ## Overview
 
-The 5G-EmPOWER platform clearly decouples control-plane operations, which are left at the air interface, from management-plane operations, which are consolidated on top of the operating system layer. 
+The 5G-EmPOWER platform clearly decouples control-plane operations, which are left at the air interface, from management-plane operations, which are consolidated on top of the operating system layer (i.e., the SD-RAN controller).
 
-An agent is introduced in the eNB to implement the management actions defined by the operating system. Communication between the agent and the operating system happens over the OpenEmpower protocol.
+An agent is introduced in the eNodeB to implement the management actions defined by the operating system. Communication between the agent and the operating system happens over the protocol described in this readme,
 
-The OpenEmpower protocol is layered on top of the Transmission Control Protocol (TCP) and can use the Transport Layer Security (TLS) protocol. The management planes should listen on TCP port 4433 for RAN elements that want to set up a connection.
+The 5G-EmPOWER protocol is layered on top of the Transmission Control Protocol (TCP) and can use the Transport Layer Security (TLS) protocol. The management planes should listen on TCP port 4433 for RAN elements that want to set up a connection.
 
 All the messages in OpenEmpower start with a common header. The format of the header is the following:
 
-    0               1               2               3
-    0 1 2 3 4 5 6 7 0 1 2 3 4 5 6 7 0 1 2 3 4 5 6 7 0 1 2 3 4 5 6 7
-    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-
-    |    Version    |    Action     |            Opcode            |
-    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-
-    |                          Element ID                          |
-    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-
-    |                          Element ID                          |
-    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-
-    |            Cell ID            |            Length            |
-    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-
-    |                         Transaction ID                       |
-    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-
-    |                            Sequence                          |
-    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-
-    |                            Interval                          |
-    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-
-    |                            Payload                           |
-    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-
- 
- Description of the fields:
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    | Version       |Flags          | <RESERVED>                    |
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    | Length                                                        |
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+Description of the fields:
 
     VERSION
-        Protocol version. Always set to 1.
-        
-    ACTION
-        Message action to be performed (see below).
+        Protocol version. Always set to 2.
+
+    FLAGS
+        Protocol Flags
+        Bits 0-6 are currently reserved, and should be cleared (`0`).
+        Bit 7 is cleared (`0`) for requests, and set (`1`) for responses. 
+        It tells how field `ts_rc` should be
+
+The rest of the message is the following
+
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    | PREAMBLE -- see above                                         |
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    | PREAMBLE -- continued                                         |
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    |TSRC                           |Cell ID                        |
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    |Element ID                                                     |
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    |Element ID (continued)                                         |
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    |Sequence number                                                |
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    |Transaction ID                                                 |
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+Description of the fields:
+
+    TSRC
+
+        Action:
+
+          bits 0-13 encode the action involved in the request/response.
+
+        For requests:
+
+            bits 14-15 encode the (general) operation type that we are
+                       required to perform:
+
+             `0`: UNDEFINED
+             `1`: CREATE/UPDATE
+             `2`: DELETE
+             `3`: RETRIEVE
     
-    Opcode
-        Operation. The first byte can be one of the following values (notice some values are valid only for certain actions)
-            UNSPECIFIED, unspecified operation
-            ADD, add a new entity (0x01)
-            GET, get one or more values (0x02)
-            SET, update the state (0x03)
-            REM, remove an entity (0x04)
-            SUCCESS, action completed with success (0x05)
-            FAIL, error (0x07)
-        The second byte depends on the action. For example it can be used to specify the type of error.
-        
-    Element ID
-        64-bits identificator of a base station.
-        
-    CELL ID
-        16-bits identificator for a cell within a base station. This usually
-        matches the Physical Cell Id.
-        
-    LENGTH
-        Message length in bytes.
-        
+        For replies:
+
+            bit 14 is reserved for future usage and should be cleared (`0`).
+
+            bit 15 tells if this is a success or a failure/error:
+
+            `0`: SUCCESS
+            `1`: FAILURE
+
+    CELL IF
+
+        Cell identifier
+
+    ELEMENT ID
+
+        Element identified
+
+    SEQUENCE NUMBER
+
+        Progressive sequence number
+
     TRANSACTION ID
-        32-bits token associated with a certain request. Replies must use the same ID as in the request in order to facilitate pairing. This is necessary because all the communications using the OpenEmpower protocol are asynchronous.
-        
-    SEQUENCE 
-        32-bits sequence number. Incremented by one for each message sent by either controller or agent.
 
-    INTERVAL
-        Interval for the execution of periodic actions (in ms).
+        Unique identifier of a (pending) transaction.
 
-    PAYLOAD
-        The message payload. 
+The common header is then followed by a variable number of information elements encoded
+in a Type Length Value (TLV) structure
+
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    |Type                           |Length                         |
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    | TLV data (not part of the TLV header -- indicated here just   |
+    | for illustration purposes)                                    |
+    .                                                               .
+    .                                                               .
+    .                                                               .
+    |                                                               |
+    | (note: length is not necessarily a multiple of _______________|
+    | 4 bytes)                                      |
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 
 ## Messages
-
-The protocols are built around 3 major events that can occurs in the agent sub-system, which are:
-
-* SINGLE EVENTS. These are simple, standalone, events, requested by the controller/agent and notified back immediately by the agent/controller.
     
-* SCHEDULED EVENTS. These are events which will be requested once, and performed periodically. 
+Here follows the list of currently supported actions and their encoding.
 
-* TRIGGERED EVENTS. These events should ideally enable/disable a functionality in the agent. Such component works with threshold or particular event which can happens in a not predictable way, like the connection of a new UE. 
-    
-Here follows the list of currently supported message and their type.
+| Service           | Action | 
+|-------------------|:------:|
+| Hello             |  0x01  | 
+| Capabilities      |  0x02  | 
 
-|                   | Single | Scheduled | Triggered | Action |
-|-------------------|:------:|:---------:|:---------:|:------:|
-| Hello             |   X    |           |           |  0x01  |
-| eNB capabilities  |   X    |           |           |  0x02  |
-| Ue reports        |        |           |     X     |  0x03  |
-| Handover          |   X    |           |           |  0x04  |
-| Cell measurements |        |     X     |           |  0x20  |
-| Ue measurements   |        |           |     X     |  0x21  |
-
-### Hello message
+### Hello Service
 
 The Hello message acts as both connection initiator and keepalive. 
 
@@ -149,7 +170,7 @@ The controller has the possibility to reject the agent. In this case the control
 
 Life-cycle:
 
-    Controller           Agent
+     Agent              Controller
         | Request          |
         +----------------->|
         |                  |
@@ -160,39 +181,48 @@ Life-cycle:
 
 Request:
 
-    Operation: UNSPECIFIED
+    Bits 0-13: 0x01 (HELLO)
+    Bits 14-15: 0x00 (UNDEFINED)
 
-     0                   1                   2                   3
-     0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
-    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-    |                             ID                                |
-    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-    
-Fields:
+  TLVs:
 
-    ID
-        A generic 32-bits field used as identificator of the Hello procedure.
-        This element is currently left to 0.
+    Hello Period
+
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    |Type                           |Length                         |
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    |Period                                                         |
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+    Fields:
+
+        PERIOD
+            The hello period of the agent
 
 Reply:
 
-    Operation: SUCCESS/FAIL
+    Bits 0-13: 0x01 (HELLO)
+    Bits 14-15: 0x00/0x01 (SUCCESS/FAIL)
 
-     0                   1                   2                   3
-     0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+  TLVs:
+
+    Hello Period
+
     +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-    |                             ID                                |
+    |Type                           |Length                         |
     +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-    
-Fields:
+    |Period                                                         |
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 
-    ID
-        A generic 32-bits field used as identificator of the Hello procedure.
-        This element is currently left to 0.
+    Fields:
 
-### eNB Capabilities message
+        PERIOD
+            The new hello period of the agent
 
-The eNB Capabilities message is used to retrieve the configuration of the eNB. The capabilities can then be activated/deactivated by the controller.
+
+### Capabilities Service
+
+The Capabilities service is used to retrieve the configuration of the eNB.
 
 Life-cycle:
 
@@ -207,36 +237,40 @@ Life-cycle:
 
 Request:
 
-    Operation: UNSPECIFIED
+    Bits 0-13: 0x02 (CAPABILITIES)
+    Bits 14-15: 0x00 (UNDEFINED)
 
-     0                   1                   2                   3
-     0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
-    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-    |                             ID                                |
-    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+  TLVs:
 
-Fields:
+    No TLVs defined
 
-    ID
-        A generic 32-bits field used as identificator of the Hello procedure.
-        This element is currently left to 0.
-        
+
 Reply:
 
-    Operation: SUCCESS/FAIL
+    Bits 0-13: 0x01 (CAPABILITIES)
+    Bits 14-15: 0x00/0x01 (SUCCESS/FAIL)
 
-     0                   1                   2                   3
-     0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
-    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-    |                   Zero or more TLV entries                    |
-    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-    
-Fields:
+  TLVs:
 
-    TLV TOKENS:
-        One of the following tokens:
-            EP_TLV_CELL_CAP
-            EP_TLV_RAN_CAPS
+    Cell
+
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    |Type                           |Length                         |
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    |dl_earfcn                                                      |
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    |n_prbs                                                         |
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+    Fields:
+
+        DL_EARFCN
+            EARFCN code for DL
+
+        N_PRBS
+            Number of Physical Resource Blocks (6,15,25,50,75,100)
+
+## Obsolete messages (to be revised)
 
 ### Handover message
 
