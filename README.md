@@ -12,7 +12,7 @@
 
 Checkout out our [website](http://5g-empower.io/) and our [wiki](https://github.com/5g-empower/5g-empower.github.io/wiki)
 
-This repository includes the 5G-EmPOWER controller and the associated SDK.
+This repository includes the 5G-EmPOWER eNodeB Agent and the protocols libraries.
 
 ### License
 Code is released under the Apache License, Version 2.0.
@@ -21,13 +21,13 @@ Code is released under the Apache License, Version 2.0.
 
 ## Pre-requisites
 
-In order to successfully build the OpenEmpower protocols you need to install the linux build tools
+In order to successfully build the eNodeB Agent you need to install the linux build tools
 
 `sudo apt-get install build-essential`
 
 ## Build from source
 
-The standard build assumes that you want to install the software and the necessary headers in the default directories `/usr/include/emage` for headers, and `/usr/lib` for the shared objects. 
+The standard build assumes that you want to install the software and the necessary headers in the default directories `/usr/include` for headers, and `/usr/lib` for the shared objects. 
 
 You can the defaults by modifying the `INCLDIR` and `INSTDIR` variables present in the Makefile .
 
@@ -46,12 +46,6 @@ After having built the software, to install it run the following command:
 You can uninstall the software run the following command:
 
 `sudo make uninstall`
-
-## License
-
-Code is released under the Apache License, Version 2.0.
-
-# OpenEmpower Protocol Documentation
 
 ## Overview
 
