@@ -1,0 +1,6 @@
+# Ignore CMake-generated stuff
+*.cmake
+CMakeFiles
+CMakeCache.txt
+Makefile
+
