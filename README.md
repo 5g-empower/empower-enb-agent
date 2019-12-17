@@ -13,13 +13,19 @@
 
 Checkout out our [website](http://5g-empower.io/) and our [wiki](https://github.com/5g-empower/5g-empower.github.io/wiki)
 
-This repository includes the 5G-EmPOWER eNodeB Agent and the protocols libraries.
+This repository includes the 5G-EmPOWER eNodeB Agent and the Protocols libraries.
 
 ### License
 Code is released under the Apache License, Version 2.0.
 
 
 # Overview
+
+The 5G-EmPOWER platform clearly decouples control-plane operations, which are left at the air interface, from management-plane operations, which are consolidated on top of the operating system layer (i.e., the SD-RAN controller).
+
+An agent is introduced in the eNodeB to implement the management actions defined by the operating system. Communication between the agent and the operating system happens over the protocol described in this readme,
+
+The 5G-EmPOWER protocol is layered on top of the Transmission Control Protocol (TCP) and can use the Transport Layer Security (TLS) protocol. The management planes should listen on TCP port 4433 for RAN elements that want to set up a connection.
 
 This is a C++ archive library providing means to encode/decode and transmit/receive messages across a TCP/IP connection, specifically meant to be used to implement an agent within SRS ENB (part of the SRS LTE package).
 
@@ -145,13 +151,7 @@ Build and install SRSLte as usual *after ensuring* that the `empower-enb-agent` 
 
 # Message Format
 
-The 5G-EmPOWER platform clearly decouples control-plane operations, which are left at the air interface, from management-plane operations, which are consolidated on top of the operating system layer (i.e., the SD-RAN controller).
-
-An agent is introduced in the eNodeB to implement the management actions defined by the operating system. Communication between the agent and the operating system happens over the protocol described in this readme,
-
-The 5G-EmPOWER protocol is layered on top of the Transmission Control Protocol (TCP) and can use the Transport Layer Security (TLS) protocol. The management planes should listen on TCP port 4433 for RAN elements that want to set up a connection.
-
-All the messages in OpenEmpower start with a common header. The format of the header is the following:
+All the messages start with a common header. The format of the header is the following:
 
     +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
     | Version       |Flags          | <RESERVED>                    |
