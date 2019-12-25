@@ -128,7 +128,7 @@ CommonHeaderEncoder::CommonHeaderEncoder(
 }
 
 void CommonHeaderEncoder::setDefaults() {
-    version(2).cellIdentifier(0).sequence(0).elementId(0).transactionId(0);
+    version(2).sequence(0).elementId(0).transactionId(0);
 }
 
 CommonHeaderEncoder::CommonHeaderEncoder(
