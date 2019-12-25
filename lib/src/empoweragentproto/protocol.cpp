@@ -101,12 +101,13 @@ EntityClass CommonHeaderDecoder::entityClass() const {
 
 void CommonHeaderDecoder::throwIfBufferIsUnsuitable(const char *method) {
     // Catch some quirks early
-    if (mBufferView.size() < 28) {
+    if (mBufferView.size() < 24) {
         std::ostringstream err;
         err << method
             << ": called with "
                "BufferView.size() == "
-            << mBufferView.size() << " (min size is 28)";
+            << mBufferView.size() << " (min size is "
+            << CommonHeader::totalLength << ')';;
         throw std::length_error(err.str());
     }
 
