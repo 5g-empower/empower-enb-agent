@@ -22,17 +22,15 @@ namespace Agent {
 /// transmitted.
 enum class EntityClass : std::uint16_t {
 
-    // The entity is a simple service on the eNodeB replying back what
-    // is is sent. Just for testing purposes.
-    ECHO_SERVICE = 0,
+    // Simple echo service
+    ECHO_SERVICE = 0xff,
 
-    // The entity is a service on the eNodeB sending out periodic
-    // requests specifying the periodicity, and expecting back
-    // responses from the controller.
-    HELLO_SERVICE = 1,
+    // This service sends out periodic requests to the controller
+    // specifying the periodicity and expects back a responses.
+    HELLO_SERVICE = 0x0,
 
-    //
-    CAPABILITIES_SERVICE = 2,
+    // This service provide the list of capabilities of the eNB
+    CAPABILITIES_SERVICE = 0x1,
 
     // Add more entity types here.
 };
@@ -76,8 +74,30 @@ struct Preamble {
     ///     interpreted.
     std::uint8_t flags = 0;
 
-    /// @brief Reserved field. It is currently ignored.
-    std::uint16_t reservedField = 0;
+    /// @brief 16-bit field encoding general info on requests/responses.
+    ///
+    /// * bits 0-13 encode the kind of entity/service/whatever
+    ///             involved in the request/response.
+    ///
+    /// For requests:
+    ///
+    /// * bits 14-15 encode the (general) operation type that we are
+    ///              required to perform:
+    ///   * `0`: SET
+    ///   * `1`: ADD
+    ///   * `2`: DEL
+    ///   * `3`: GET
+    ///
+    /// For replies:
+    ///
+    /// * bit 14 is reserved for future usage and should be cleared
+    ///          (`0`).
+    ///
+    /// * bit 15 tells if this is a success or a failure/error:
+    ///
+    ///   * `0`: SUCCESS
+    ///   * `1`: FAILURE
+    std::uint16_t ts_rc = 0;
 
     /// @brief The whole message length, in bytes, including preamble and
     /// headers.
@@ -92,6 +112,7 @@ struct Preamble {
     enum {
         versionOffset = 0,
         flagsOffset = 1,
+        tsrcOffset = 2,
         lengthOffset = 4,
     };
 
@@ -126,34 +147,6 @@ struct CommonHeader {
     /// @brief The preamble
     Preamble preamble;
 
-    /// @brief 16-bit field encoding general info on requests/responses.
-    ///
-    /// * bits 0-13 encode the kind of entity/service/whatever
-    ///             involved in the request/response.
-    ///
-    /// For requests:
-    ///
-    /// * bits 14-15 encode the (general) operation type that we are
-    ///              required to perform:
-    ///   * `0`: SET
-    ///   * `1`: ADD
-    ///   * `2`: DEL
-    ///   * `3`: GET
-    ///
-    /// For replies:
-    ///
-    /// * bit 14 is reserved for future usage and should be cleared
-    ///          (`0`).
-    ///
-    /// * bit 15 tells if this is a success or a failure/error:
-    ///
-    ///   * `0`: SUCCESS
-    ///   * `1`: FAILURE
-    std::uint16_t ts_rc = 0;
-
-    /// @brief Cell identifier
-    std::uint16_t cell_id = 0;
-
     /// @brief Identifier of the element (of the network)
     std::uint64_t element_id = 0;
 
@@ -168,16 +161,15 @@ struct CommonHeader {
         versionOffset = Preamble::versionOffset,
         flagsOffset = Preamble::flagsOffset,
         lengthOffset = Preamble::lengthOffset,
-        tsrcOffset = Preamble::size + 0,
-        cellIdOffset = Preamble::size + 2,
-        elementIdOffset = Preamble::size + 4,
-        sequenceOffset = Preamble::size + 12,
-        transactionIdOffset = Preamble::size + 16,
+        tsrcOffset = Preamble::tsrcOffset,
+        elementIdOffset = Preamble::size + 0,
+        sequenceOffset = Preamble::size + 8,
+        transactionIdOffset = Preamble::size + 12,
     };
 
     enum {
         /// @brief The total length in bytes of a CommonHeader
-        totalLength = Preamble::size + 20,
+        totalLength = Preamble::size + 16,
     };
 
     // Just to make clear that this struct is not meant to be

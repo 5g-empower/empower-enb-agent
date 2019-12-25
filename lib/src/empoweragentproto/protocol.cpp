@@ -37,11 +37,6 @@ std::size_t CommonHeaderDecoder::totalLengthBytes() const {
     return mBufferView.getUint32At_nocheck(CommonHeader::lengthOffset);
 }
 
-std::uint16_t CommonHeaderDecoder::cellIdentifier() const {
-    // Bounds already checked on construction
-    return mBufferView.getUint16At_nocheck(CommonHeader::cellIdOffset);
-}
-
 std::uint32_t CommonHeaderDecoder::sequence() const {
     // Bounds already checked on construction
     return mBufferView.getUint32At_nocheck(CommonHeader::sequenceOffset);
@@ -251,12 +246,6 @@ void CommonHeaderEncoder::throwIfBufferIsUnsuitable(const char *method) {
             << CommonHeader::totalLength << ')';
         throw std::length_error(err.str());
     }
-}
-
-CommonHeaderEncoder &CommonHeaderEncoder::cellIdentifier(std::uint16_t v) {
-    // Bounds already checked on construction
-    mBufferWritableView.setUint16At_nocheck(CommonHeader::cellIdOffset, v);
-    return *this;
 }
 
 CommonHeaderEncoder &CommonHeaderEncoder::sequence(std::uint32_t v) {
