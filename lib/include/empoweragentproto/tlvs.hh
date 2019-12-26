@@ -25,6 +25,7 @@ enum class TLVType : std::uint16_t {
     LIST_OF_TLV = 3,
     PERIODICITY = 4,
     BINARY_DATA = 5,
+    CELL = 6,
 };
 
 /**
@@ -213,6 +214,64 @@ class TLVPeriodicityMs : public TLVBase {
 
     enum {
         millisecondsOffset = 0,
+    };
+};
+
+/**
+ * The configuration of a cell
+ */
+
+class TLVCell : public TLVBase {
+  public:
+    virtual ~TLVCell() {}
+
+    /// @name TLVBase interface
+    /// @{
+    virtual TLVType type() const override { return TLVType::CELL; }
+    virtual std::size_t encode(NetworkLib::BufferWritableView buffer) override;
+    virtual std::size_t decode(NetworkLib::BufferView buffer) override;
+    /// @}
+
+    /// @name Getters and setters
+    /// @{
+
+    std::uint16_t pci() const { return mPci; }
+    TLVCell &pci(std::uint16_t v) {
+        mPci = v;
+        return *this;
+    }
+
+    std::uint32_t dlEarfcn() const { return mDlEarfcn; }
+    TLVCell &dlEarfcn(std::uint32_t v) {
+        mDlEarfcn = v;
+        return *this;
+    }
+
+    std::uint32_t ulEarfcn() const { return mUlEarfcn; }
+    TLVCell &ulEarfcn(std::uint32_t v) {
+        mUlEarfcn = v;
+        return *this;
+    }
+
+    std::uint8_t nPrb() const { return mNPrb; }
+    TLVCell &nPrb(std::uint8_t v) {
+        mNPrb = v;
+        return *this;
+    }
+
+    /// @}
+
+  private:
+    std::uint16_t mPci = 0;
+    std::uint32_t mDlEarfcn = 0;
+    std::uint32_t mUlEarfcn = 0;
+    std::uint8_t mNPrb = 0;
+
+    enum {
+        pciOffset = 0,
+        dlEarfcnOffset = 2,
+        ulEarfcnOffset = 6,
+        nPrbOffset = 10,
     };
 };
 

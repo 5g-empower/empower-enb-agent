@@ -109,5 +109,23 @@ std::size_t TLVPeriodicityMs::decode(NetworkLib::BufferView buffer) {
 
 /**********************************************************************/
 
+std::size_t TLVCell::encode(NetworkLib::BufferWritableView buffer) {
+    buffer.setUint16At(pciOffset, mPci);
+    buffer.setUint32At(dlEarfcnOffset, mDlEarfcn);
+    buffer.setUint32At(ulEarfcnOffset, mUlEarfcn);
+    buffer.setUint8At(nPrbOffset, mNPrb);
+    return 11;
+}
+
+std::size_t TLVCell::decode(NetworkLib::BufferView buffer) {
+    mPci = buffer.getUint16At(pciOffset);
+    mDlEarfcn = buffer.getUint32At(dlEarfcnOffset);
+    mUlEarfcn = buffer.getUint32At(ulEarfcnOffset);
+    mNPrb = buffer.getUint8At(nPrbOffset);
+    return 11;
+}
+
+/**********************************************************************/
+
 } // namespace Agent
 } // namespace Empower
