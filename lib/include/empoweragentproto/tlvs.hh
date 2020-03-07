@@ -26,6 +26,7 @@ enum class TLVType : std::uint16_t {
     PERIODICITY = 4,
     BINARY_DATA = 5,
     CELL = 6,
+    UE_REPORT = 7,
 };
 
 /**
@@ -272,6 +273,40 @@ class TLVCell : public TLVBase {
         dlEarfcnOffset = 2,
         ulEarfcnOffset = 6,
         nPrbOffset = 10,
+    };
+};
+
+/**
+ * The configuration of a cell
+ */
+
+class TLVUEReport : public TLVBase {
+  public:
+    virtual ~TLVUEReport() {}
+
+    /// @name TLVBase interface
+    /// @{
+    virtual TLVType type() const override { return TLVType::UE_REPORT; }
+    virtual std::size_t encode(NetworkLib::BufferWritableView buffer) override;
+    virtual std::size_t decode(NetworkLib::BufferView buffer) override;
+    /// @}
+
+    /// @name Getters and setters
+    /// @{
+
+    std::uint16_t rnti() const { return mRNTI; }
+    TLVUEReport &rnti(std::uint16_t v) {
+        mRNTI = v;
+        return *this;
+    }
+
+    /// @}
+
+  private:
+    std::uint16_t mRNTI = 0;
+
+    enum {
+        rntiOffset = 0,
     };
 };
 

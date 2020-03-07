@@ -29,8 +29,11 @@ enum class EntityClass : std::uint16_t {
     // specifying the periodicity and expects back a responses.
     HELLO_SERVICE = 0x0,
 
-    // This service provide the list of capabilities of the eNB
+    // This service provides the list of capabilities of the eNB
     CAPABILITIES_SERVICE = 0x1,
+
+    // This service enable UE reportsB
+    UE_REPORTS_SERVICE = 0x2,
 
     // Add more entity types here.
 };

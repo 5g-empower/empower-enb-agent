@@ -127,5 +127,17 @@ std::size_t TLVCell::decode(NetworkLib::BufferView buffer) {
 
 /**********************************************************************/
 
+std::size_t TLVUEReport::encode(NetworkLib::BufferWritableView buffer) {
+    buffer.setUint16At(rntiOffset, mRNTI);
+    return 2;
+}
+
+std::size_t TLVUEReport::decode(NetworkLib::BufferView buffer) {
+	mRNTI = buffer.getUint16At(rntiOffset);
+    return 2;
+}
+
+/**********************************************************************/
+
 } // namespace Agent
 } // namespace Empower
