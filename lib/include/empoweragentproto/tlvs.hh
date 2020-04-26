@@ -294,19 +294,51 @@ class TLVUEReport : public TLVBase {
     /// @name Getters and setters
     /// @{
 
+    std::uint64_t imsi() const { return mIMSI; }
+    TLVUEReport &imsi(std::uint64_t v) {
+        mIMSI = v;
+        return *this;
+    }
+
+    std::uint32_t tmsi() const { return mTMSI; }
+    TLVUEReport &tmsi(std::uint32_t v) {
+        mTMSI = v;
+        return *this;
+    }
+
     std::uint16_t rnti() const { return mRNTI; }
     TLVUEReport &rnti(std::uint16_t v) {
         mRNTI = v;
         return *this;
     }
 
+    std::uint8_t status() const { return mStatus; }
+    TLVUEReport &status(std::uint8_t v) {
+        mStatus = v;
+        return *this;
+    }
+
+    std::uint16_t pci() const { return mPCI; }
+    TLVUEReport &pci(std::uint8_t v) {
+        mPCI = v;
+        return *this;
+    }
+
     /// @}
 
   private:
+    std::uint64_t mIMSI = 0;
+    std::uint32_t mTMSI = 0;
     std::uint16_t mRNTI = 0;
+    std::uint8_t mStatus = 0;
+    std::uint16_t mPCI = 0;
 
     enum {
-        rntiOffset = 0,
+        imsiOffset = 0,
+        tmsiOffset = 8,
+        rntiOffset = 12,
+        statusOffset = 14,
+		pciOffset = 15
     };
 };
 

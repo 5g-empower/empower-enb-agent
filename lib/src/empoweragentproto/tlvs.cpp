@@ -128,13 +128,21 @@ std::size_t TLVCell::decode(NetworkLib::BufferView buffer) {
 /**********************************************************************/
 
 std::size_t TLVUEReport::encode(NetworkLib::BufferWritableView buffer) {
+    buffer.setUint64At(imsiOffset, mIMSI);
+    buffer.setUint32At(tmsiOffset, mTMSI);
     buffer.setUint16At(rntiOffset, mRNTI);
-    return 2;
+    buffer.setUint8At(statusOffset, mStatus);
+    buffer.setUint16At(pciOffset, mPCI);
+    return 17;
 }
 
 std::size_t TLVUEReport::decode(NetworkLib::BufferView buffer) {
+	mIMSI = buffer.getUint64At(imsiOffset);
+	mTMSI = buffer.getUint32At(tmsiOffset);
 	mRNTI = buffer.getUint16At(rntiOffset);
-    return 2;
+	mStatus = buffer.getUint8At(statusOffset);
+	mPCI = buffer.getUint16At(pciOffset);
+	return 17;
 }
 
 /**********************************************************************/
