@@ -32,8 +32,11 @@ enum class EntityClass : std::uint16_t {
     // This service provides the list of capabilities of the eNB
     CAPABILITIES_SERVICE = 0x1,
 
-    // This service enable UE reportsB
+    // This service provides the list of UEs
     UE_REPORTS_SERVICE = 0x2,
+
+    // This service enable UE measurements
+    UE_MEASUREMENTS_SERVICE = 0x3,
 
     // Add more entity types here.
 };

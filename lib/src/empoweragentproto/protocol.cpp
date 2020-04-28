@@ -54,41 +54,35 @@ std::uint32_t CommonHeaderDecoder::transactionId() const {
 
 MessageClass CommonHeaderDecoder::messageClass() const {
     MessageClass result = MessageClass::INVALID;
-
     if ((flags() & flagsRequestOrResponseMask) == 0) {
         // This is a request
-
-        // Consider only bits 14-15.
-        const std::uint8_t op = (tsRc() >> 13) & 0x03;
+        const std::uint8_t op = (tsRc() >> 14);
         switch (op) {
-        case 0:
+        case 1:
             result = MessageClass::REQUEST_SET;
             break;
 
-        case 1:
+        case 2:
             result = MessageClass::REQUEST_ADD;
             break;
 
-        case 2:
+        case 3:
             result = MessageClass::REQUEST_DEL;
             break;
 
-        case 3:
+        case 4:
             result = MessageClass::REQUEST_GET;
             break;
         }
-
     } else {
-        // This is a response. Consider just bit 15
+        // This is a response.
         const std::uint8_t op = (tsRc() >> 14);
-
         if (op == 0) {
             result = MessageClass::RESPONSE_SUCCESS;
         } else {
             result = MessageClass::RESPONSE_FAILURE;
         }
     }
-
     return result;
 }
 

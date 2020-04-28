@@ -27,6 +27,8 @@ enum class TLVType : std::uint16_t {
     BINARY_DATA = 5,
     CELL = 6,
     UE_REPORT = 7,
+    UE_MEASUREMENTS_CONFIG = 8,
+	UE_MEASUREMENT_REPORT = 9
 };
 
 /**
@@ -339,6 +341,80 @@ class TLVUEReport : public TLVBase {
         rntiOffset = 12,
         statusOffset = 14,
 		pciOffset = 15
+    };
+};
+
+/**
+ * The configuration of a UE Measurement
+ */
+
+class TLVUEMeasurementConfig : public TLVBase {
+  public:
+    virtual ~TLVUEMeasurementConfig() {}
+
+    /// @name TLVBase interface
+    /// @{
+    virtual TLVType type() const override { return TLVType::UE_MEASUREMENTS_CONFIG; }
+    virtual std::size_t encode(NetworkLib::BufferWritableView buffer) override;
+    virtual std::size_t decode(NetworkLib::BufferView buffer) override;
+    /// @}
+
+    /// @name Getters and setters
+    /// @{
+
+    std::uint16_t id() const { return mID; }
+    TLVUEMeasurementConfig &id(std::uint8_t v) {
+        mID = v;
+        return *this;
+    }
+
+    std::uint16_t rnti() const { return mRNTI; }
+    TLVUEMeasurementConfig &rnti(std::uint8_t v) {
+    	mRNTI = v;
+        return *this;
+    }
+
+    std::uint16_t earfcn() const { return mEARFCN; }
+    TLVUEMeasurementConfig &earfcn(std::uint8_t v) {
+    	mEARFCN = v;
+        return *this;
+    }
+
+    std::uint16_t interval() const { return mInterval; }
+    TLVUEMeasurementConfig &interval(std::uint8_t v) {
+    	mInterval = v;
+        return *this;
+    }
+
+    std::uint16_t maxCells() const { return mMaxCells; }
+    TLVUEMeasurementConfig &maxCells(std::uint8_t v) {
+    	mMaxCells = v;
+        return *this;
+    }
+
+    std::uint16_t maxUsers() const { return mMaxUsers; }
+    TLVUEMeasurementConfig &maxUsers(std::uint8_t v) {
+    	mMaxUsers = v;
+        return *this;
+    }
+
+    /// @}
+
+  private:
+    std::uint16_t mID = 0;
+    std::uint16_t mRNTI = 0;
+    std::uint16_t mEARFCN = 0;
+    std::uint16_t mInterval = 0;
+    std::uint16_t mMaxCells = 0;
+    std::uint16_t mMaxUsers = 0;
+
+    enum {
+        idOffset = 0,
+        rntiOffset = 2,
+        earfcnOffset = 4,
+        intervalOffset = 6,
+		maxCellOffset = 8,
+		maxUsersOffset = 10
     };
 };
 
