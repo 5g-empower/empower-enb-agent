@@ -38,6 +38,9 @@ enum class EntityClass : std::uint16_t {
     // This service enable UE measurements
     UE_MEASUREMENTS_SERVICE = 0x3,
 
+    // This service enable MAC PRB utilization report
+	MAC_PRB_UTILIZATION_SERVICE = 0x4,
+
     // Add more entity types here.
 };
 

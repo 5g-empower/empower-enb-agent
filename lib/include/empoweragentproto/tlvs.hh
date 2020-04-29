@@ -18,17 +18,17 @@ namespace Agent {
 /// unique ID.
 enum class TLVType : std::uint16_t {
     /// @brief NONE is reserved
-    NONE = 0,
-
-    ERROR = 1,
-    KEY_VALUE_STRING_PAIRS = 2,
-    LIST_OF_TLV = 3,
-    PERIODICITY = 4,
-    BINARY_DATA = 5,
-    CELL = 6,
-    UE_REPORT = 7,
-    UE_MEASUREMENTS_CONFIG = 8,
-	UE_MEASUREMENT_REPORT = 9
+    NONE = 0x0,
+    ERROR = 0x1,
+    KEY_VALUE_STRING_PAIRS = 0x2,
+    LIST_OF_TLV = 0x3,
+    BINARY_DATA = 0x4,
+    PERIODICITY = 0x5,
+	CELL = 0x6,
+    UE_REPORT = 0x7,
+    UE_MEASUREMENTS_CONFIG = 0x8,
+	UE_MEASUREMENT_REPORT = 0x9,
+	MAC_PRB_UTILIZATION_REPORT = 0xA,
 };
 
 /**
@@ -363,37 +363,37 @@ class TLVUEMeasurementConfig : public TLVBase {
     /// @{
 
     std::uint16_t id() const { return mID; }
-    TLVUEMeasurementConfig &id(std::uint8_t v) {
+    TLVUEMeasurementConfig &id(std::uint16_t v) {
         mID = v;
         return *this;
     }
 
     std::uint16_t rnti() const { return mRNTI; }
-    TLVUEMeasurementConfig &rnti(std::uint8_t v) {
+    TLVUEMeasurementConfig &rnti(std::uint16_t v) {
     	mRNTI = v;
         return *this;
     }
 
     std::uint16_t earfcn() const { return mEARFCN; }
-    TLVUEMeasurementConfig &earfcn(std::uint8_t v) {
+    TLVUEMeasurementConfig &earfcn(std::uint16_t v) {
     	mEARFCN = v;
         return *this;
     }
 
     std::uint16_t interval() const { return mInterval; }
-    TLVUEMeasurementConfig &interval(std::uint8_t v) {
+    TLVUEMeasurementConfig &interval(std::uint16_t v) {
     	mInterval = v;
         return *this;
     }
 
     std::uint16_t maxCells() const { return mMaxCells; }
-    TLVUEMeasurementConfig &maxCells(std::uint8_t v) {
+    TLVUEMeasurementConfig &maxCells(std::uint16_t v) {
     	mMaxCells = v;
         return *this;
     }
 
     std::uint16_t maxUsers() const { return mMaxUsers; }
-    TLVUEMeasurementConfig &maxUsers(std::uint8_t v) {
+    TLVUEMeasurementConfig &maxUsers(std::uint16_t v) {
     	mMaxUsers = v;
         return *this;
     }
@@ -415,6 +415,64 @@ class TLVUEMeasurementConfig : public TLVBase {
         intervalOffset = 6,
 		maxCellOffset = 8,
 		maxUsersOffset = 10
+    };
+};
+
+/**
+ * The configuration of a UE Measurement
+ */
+
+class TLVMACPrbReportReport : public TLVBase {
+  public:
+    virtual ~TLVMACPrbReportReport() {}
+
+    /// @name TLVBase interface
+    /// @{
+    virtual TLVType type() const override { return TLVType::MAC_PRB_UTILIZATION_REPORT; }
+    virtual std::size_t encode(NetworkLib::BufferWritableView buffer) override;
+    virtual std::size_t decode(NetworkLib::BufferView buffer) override;
+    /// @}
+
+    /// @name Getters and setters
+    /// @{
+
+    std::uint16_t nPrb() const { return mNPrb; }
+    TLVMACPrbReportReport &nPrb(std::uint16_t v) {
+    	mNPrb = v;
+        return *this;
+    }
+
+    std::uint32_t dlPrbCounters() const { return mDL; }
+    TLVMACPrbReportReport &dlPrbCounters(std::uint32_t v) {
+    	mDL = v;
+        return *this;
+    }
+
+    std::uint32_t ulPrbCounters() const { return mUL; }
+    TLVMACPrbReportReport &ulPrbCounters(std::uint32_t v) {
+    	mUL = v;
+        return *this;
+    }
+
+    std::uint16_t pci() const { return mPCI; }
+    TLVMACPrbReportReport &pci(std::uint16_t v) {
+    	mPCI = v;
+        return *this;
+    }
+
+    /// @}
+
+  private:
+    std::uint16_t mNPrb = 0;
+    std::uint32_t mDL = 0;
+    std::uint32_t mUL = 0;
+    std::uint16_t mPCI = 0;
+
+    enum {
+    	nPrbOffset = 0,
+        dlOffset = 2,
+        ulOffset = 6,
+		pciOffset = 10,
     };
 };
 

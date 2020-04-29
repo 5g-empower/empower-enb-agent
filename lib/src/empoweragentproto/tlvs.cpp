@@ -169,5 +169,23 @@ std::size_t TLVUEMeasurementConfig::decode(NetworkLib::BufferView buffer) {
 
 /**********************************************************************/
 
+std::size_t TLVMACPrbReportReport::encode(NetworkLib::BufferWritableView buffer) {
+    buffer.setUint16At(nPrbOffset, mNPrb);
+    buffer.setUint32At(dlOffset, mDL);
+    buffer.setUint32At(ulOffset, mUL);
+    buffer.setUint16At(pciOffset, mPCI);
+    return 12;
+}
+
+std::size_t TLVMACPrbReportReport::decode(NetworkLib::BufferView buffer) {
+	mNPrb = buffer.getUint16At(nPrbOffset);
+	mDL = buffer.getUint32At(dlOffset);
+	mUL = buffer.getUint32At(ulOffset);
+	mPCI = buffer.getUint16At(pciOffset);
+	return 12;
+}
+
+/**********************************************************************/
+
 } // namespace Agent
 } // namespace Empower
