@@ -148,23 +148,31 @@ std::size_t TLVUEReport::decode(NetworkLib::BufferView buffer) {
 /**********************************************************************/
 
 std::size_t TLVUEMeasurementConfig::encode(NetworkLib::BufferWritableView buffer) {
-    buffer.setUint16At(idOffset, mID);
     buffer.setUint16At(rntiOffset, mRNTI);
-    buffer.setUint16At(earfcnOffset, mEARFCN);
-    buffer.setUint16At(intervalOffset, mInterval);
-    buffer.setUint16At(maxCellOffset, mMaxCells);
-    buffer.setUint16At(maxUsersOffset, mMaxUsers);
-    return 12;
+    buffer.setUint8At(intervalOffset, mInterval);
+    buffer.setUint8At(amountOffset, mAmount);
+    return 4;
 }
 
 std::size_t TLVUEMeasurementConfig::decode(NetworkLib::BufferView buffer) {
-	mID = buffer.getUint16At(idOffset);
 	mRNTI = buffer.getUint16At(rntiOffset);
-	mEARFCN = buffer.getUint16At(earfcnOffset);
-	mInterval = buffer.getUint16At(intervalOffset);
-	mMaxCells = buffer.getUint16At(maxCellOffset);
-	mMaxUsers = buffer.getUint16At(maxUsersOffset);
-	return 12;
+	mInterval = buffer.getUint8At(intervalOffset);
+	mAmount = buffer.getUint8At(amountOffset);
+	return 4;
+}
+
+/**********************************************************************/
+
+std::size_t TLVUEMeasurementId::encode(NetworkLib::BufferWritableView buffer) {
+    buffer.setUint16At(rntiOffset, mRNTI);
+    buffer.setUint8At(measIdOffset, mMeasId);
+    return 3;
+}
+
+std::size_t TLVUEMeasurementId::decode(NetworkLib::BufferView buffer) {
+	mRNTI = buffer.getUint16At(rntiOffset);
+	mMeasId = buffer.getUint8At(measIdOffset);
+	return 3;
 }
 
 /**********************************************************************/

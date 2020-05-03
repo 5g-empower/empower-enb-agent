@@ -28,6 +28,7 @@ enum class TLVType : std::uint16_t {
     UE_REPORT = 0x7,
     UE_MEASUREMENTS_CONFIG = 0x8,
 	UE_MEASUREMENT_REPORT = 0x9,
+	UE_MEASUREMENT_ID = 0xB,
 	MAC_PRB_UTILIZATION_REPORT = 0xA,
 };
 
@@ -362,59 +363,77 @@ class TLVUEMeasurementConfig : public TLVBase {
     /// @name Getters and setters
     /// @{
 
-    std::uint16_t id() const { return mID; }
-    TLVUEMeasurementConfig &id(std::uint16_t v) {
-        mID = v;
-        return *this;
-    }
-
     std::uint16_t rnti() const { return mRNTI; }
     TLVUEMeasurementConfig &rnti(std::uint16_t v) {
     	mRNTI = v;
         return *this;
     }
 
-    std::uint16_t earfcn() const { return mEARFCN; }
-    TLVUEMeasurementConfig &earfcn(std::uint16_t v) {
-    	mEARFCN = v;
-        return *this;
-    }
-
-    std::uint16_t interval() const { return mInterval; }
-    TLVUEMeasurementConfig &interval(std::uint16_t v) {
+    std::uint8_t interval() const { return mInterval; }
+    TLVUEMeasurementConfig &interval(std::uint8_t v) {
     	mInterval = v;
         return *this;
     }
 
-    std::uint16_t maxCells() const { return mMaxCells; }
-    TLVUEMeasurementConfig &maxCells(std::uint16_t v) {
-    	mMaxCells = v;
-        return *this;
-    }
-
-    std::uint16_t maxUsers() const { return mMaxUsers; }
-    TLVUEMeasurementConfig &maxUsers(std::uint16_t v) {
-    	mMaxUsers = v;
+    std::uint8_t amount() const { return mAmount; }
+    TLVUEMeasurementConfig &amount(std::uint8_t v) {
+        mAmount = v;
         return *this;
     }
 
     /// @}
 
   private:
-    std::uint16_t mID = 0;
     std::uint16_t mRNTI = 0;
-    std::uint16_t mEARFCN = 0;
-    std::uint16_t mInterval = 0;
-    std::uint16_t mMaxCells = 0;
-    std::uint16_t mMaxUsers = 0;
+    std::uint8_t mInterval = 0;
+    std::uint8_t mAmount = 0;
 
     enum {
-        idOffset = 0,
-        rntiOffset = 2,
-        earfcnOffset = 4,
-        intervalOffset = 6,
-		maxCellOffset = 8,
-		maxUsersOffset = 10
+        rntiOffset = 0,
+        intervalOffset = 2,
+		amountOffset = 3
+    };
+};
+
+/**
+ * The id of a UE Measurement
+ */
+
+class TLVUEMeasurementId : public TLVBase {
+  public:
+    virtual ~TLVUEMeasurementId() {}
+
+    /// @name TLVBase interface
+    /// @{
+    virtual TLVType type() const override { return TLVType::UE_MEASUREMENT_ID; }
+    virtual std::size_t encode(NetworkLib::BufferWritableView buffer) override;
+    virtual std::size_t decode(NetworkLib::BufferView buffer) override;
+    /// @}
+
+    /// @name Getters and setters
+    /// @{
+
+    std::uint16_t rnti() const { return mRNTI; }
+    TLVUEMeasurementId &rnti(std::uint16_t v) {
+    	mRNTI = v;
+        return *this;
+    }
+
+    std::uint8_t measId() const { return mMeasId; }
+    TLVUEMeasurementId &measId(std::uint8_t v) {
+    	mMeasId = v;
+        return *this;
+    }
+
+    /// @}
+
+  private:
+    std::uint16_t mRNTI = 0;
+    std::uint8_t mMeasId = 0;
+
+    enum {
+        rntiOffset = 0,
+        measIdOffset = 2
     };
 };
 
