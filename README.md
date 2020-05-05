@@ -1,4 +1,5 @@
 
+
 5G-EmPOWER: Mobile Networks Operating System
 ============================================
 
@@ -116,23 +117,16 @@ The documentation can then be found in `.../doc/html/index.html`.
 
 Start from `.../srsenb/src/empoweragent.cc` and `.../srsenb/hdr/empoweragent.h`, and`.../srsenb/src/main.cc` and `.../srsenb/src/enb.cc`
 
-1. The Empower agent is started in a single separate thread;
+1. The Empower agent is started in a single separate thread
 
-2. then it periodically attempts to (re)open a TCP connection to the
+2. The agent periodically attempts to (re)open a TCP connection to the
    address and port of the controller every `delay` microseconds
    (address, port and delay are specified in a new section of the
    srsenb configuration file -- see below).
 
-   If no connection can be opened, the agent performs the periodic tasks.
+3. Once a connection is opened, the agent waits up to `delayms` microseconds for an incoming message from the controller. If a message is availabile, it is received and processed immediately.
 
-3. once a connection is opened, the agent waits up to `delay` microseconds for
-   an incoming message from the controller.
-
-   If a message is availabile, it is received and processed immediately.
-
-   If no message is available, the agent performs the periodic
-   tasks. Since the connection is opened, in this case it sends to the
-   controller a HELLO message specifying just the `delay` interval.
+4. A separate thread is created to periodically send HELLO messages to the controller. The period is again specified with the `delayms` parameter
 
 The srsenb configuration has been extended with a new section for the
 Empower agent (those in the example below are the default values):
@@ -142,7 +136,6 @@ Empower agent (those in the example below are the default values):
 controller_addr = 127.0.0.1
 controller_port = 2110
 delayms = 1500
-
 ```
 ## Build
 
@@ -182,9 +175,10 @@ Description of the fields:
                        required to perform:
 
              `0`: UNDEFINED
-             `1`: CREATE/UPDATE
-             `2`: DELETE
-             `3`: RETRIEVE
+             `1`: UPDATE
+             `2`: CREATE
+             `3`: DELETE
+             `4`: RETRIEVE
     
         For replies:
 
@@ -202,7 +196,7 @@ The rest of the message is the following
     +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
     | PREAMBLE -- continued                                         |
     +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-    |Element ID                                                     |
+    | Padding                       |Element ID                     |
     +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
     |Element ID (continued)                                         |
     +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
@@ -215,7 +209,7 @@ Description of the fields:
 
     ELEMENT ID
 
-        Element identified
+        Element identified (a 48-bit Ethernet address)
 
     SEQUENCE NUMBER
 
@@ -245,10 +239,14 @@ in a Type Length Value (TLV) structure
     
 Here follows the list of currently supported actions and their encoding.
 
-| Service           | Action | 
-|-------------------|:------:|
-| Hello             |  0x01  | 
-| Capabilities      |  0x02  | 
+| Service               | Action | 
+|-----------------------|:------:|
+| Hello                 |  0x01  | 
+| Capabilities          |  0x02  | 
+| UE Reports            |  0x03  | 
+| UE Measurement        |  0x04  | 
+| MAC PRB Utilization   |  0x05  | 
+
 
 ### Hello Service
 
@@ -287,7 +285,7 @@ Request:
     Fields:
 
         PERIOD
-            The hello period of the agent
+            The hello period of the agent (in ms)
 
 Reply:
 
@@ -307,7 +305,7 @@ Reply:
     Fields:
 
         PERIOD
-            The new hello period of the agent
+            The new hello period of the agent (in ms)
 
 
 ### Capabilities Service
@@ -347,18 +345,92 @@ Reply:
     +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
     |Type                           |Length                         |
     +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-    |dl_earfcn                                                      |
+    |PCI                            |dl_earfcn                      |
     +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-    |n_prbs         |
-    +-+-+-+-+-+-+-+-+
+    |dl_earfcn (continued)          |ul_earfcn                      |
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    |Ul_earfcn (continued)          |n_prbs         |
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 
     Fields:
 
+        PCU
+            The physical cell id
+            
         DL_EARFCN
             EARFCN code for DL
+            
+        DL_EARFCN
+            EARFCN code for UL
 
         N_PRBS
             Number of Physical Resource Blocks (6,15,25,50,75,100)
+
+### UE report message
+
+The UE report request message tells the agent to list all connected UE. The agent also sends a UE Report message every time a UE connects/disconnectes.
+
+Life-cycle:
+
+    Controller           Agent
+        | Request          |
+        +----------------->|
+        |                  |
+        |            Reply |
+        |<-----------------+
+        |                  |
+        |   Reply (new UE) |
+        |<-----------------+
+        v                  v
+
+
+Request:
+
+    Bits 0-13: 0x03 (UE REPORTS)
+    Bits 14-15: 0x00 (UNDEFINED)
+
+  TLVs:
+
+    No TLVs defined
+
+Reply:
+
+    Bits 0-13: 0x01 (UE REPORTS)
+    Bits 14-15: 0x00/0x01 (SUCCESS/FAIL)
+
+ 
+Cell Configuration
+
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    |Type                           |Length                         |
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    |IMSI                                                           |
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    |IMSI (continued)                                               |
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    |TMSI                                                           |
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    |RNTI                           |Status         |PCI            |
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    |PCI (continued)|
+    +-+-+-+-+-+-+-+-+
+    
+    Fields:
+
+        IMSI
+            The UE IMSI
+            
+        TMSI
+            The UE TMSI
+            
+        RNTI
+            The UE RNTI
+
+        STATUS
+            The status opcode (0x1=connected, 0x2=disconnected)
+            
+        PCI
+           The physical cell id
 
 ## Obsolete messages (to be revised)
 
@@ -481,55 +553,6 @@ Fields:
     TLV TOKENS:
         One of the following tokens:
             EP_TLV_CELL_PRB_REPORT
-
-### UE report message
-
-The UE report message tells the agent to start reporting changes about the UEs connected to the eNB. Even if the IMSI field is present in the message, the particular agent implementation can decide to leave it filled with zero.
-
-This message carry a complete view of the situation, and not only a difference between two status. This means that the UEs listed here are the current ones connected through the eNB.
-
-Life-cycle:
-
-    Controller           Agent
-        | Request          |
-        +----------------->|
-        |                  |
-        |            Reply |
-        |<-----------------+
-        |                  |
-        v                  v
-
-Request:
-
-    Operation: ADD/REM
-
-     0                   1                   2                   3
-     0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
-    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-    |                             ID                                |
-    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-
-Fields:
-
-    ID
-        A generic 32-bits field used as identificator of the Hello procedure.
-        This element is currently left to 0.
-
-Reply:
-
-    Operation: SUCCESS/FAIL
-
-     0                   1                   2                   3
-     0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
-    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-    |                      UE report TLVs                           |
-    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-
-Fields:
-
-    TLV TOKENS:
-        One of the following tokens:
-            EP_TLV_UE_REP_ID
 
 ### UE measurement 
 
