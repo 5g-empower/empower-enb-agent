@@ -6,7 +6,7 @@ set(CMAKE_CXX_STANDARD 11)
 
 
 # Generate PIC code so object files can be used both in archive
-# libraries and in shared library 
+# libraries and in shared library
 set(CMAKE_CXX_FLAGS "-Wall -Wextra -pedantic -fPIC -DPIC")
 set(CMAKE_C_FLAGS "-Wall -Wextra -pedantic -fPIC -DPIC")
 
@@ -18,13 +18,13 @@ set(CMAKE_C_FLAGS_RELEASE "-O3")
 set(CMAKE_CXX_FLAGS_DEBUG "-g")
 set(CMAKE_C_FLAGS_DEBUG "-g")
 
-option(EMPOWER_ENB_AGENT2_BUILD_EXAMPLES       "Build also the examples" ON)
+option(EMPOWER_ENB_AGENT_BUILD_EXAMPLES       "Build also the examples" ON)
 
 # Public include files of our libraries
-set(EMPOWER_ENB_AGENT2_INCLUDE_DIR  ${PROJECT_SOURCE_DIR}/lib/include)
+set(EMPOWER_ENB_AGENT_INCLUDE_DIR  ${PROJECT_SOURCE_DIR}/lib/include)
 
-# Libraries to link for examples 
-set(EMPOWER_ENB_AGENT2_LIBS EmpowerAgentProto)
+# Libraries to link for examples
+set(EMPOWER_ENB_AGENT_LIBS EmpowerAgentProto)
 
 add_subdirectory(lib)
 
@@ -32,9 +32,9 @@ add_subdirectory(lib)
 #
 # The examples just illustrate how the libraries can be used
 #
-if (EMPOWER_ENB_AGENT2_BUILD_EXAMPLES)
+if (EMPOWER_ENB_AGENT_BUILD_EXAMPLES)
   add_subdirectory(examples)
-endif()  
+endif()
 
 #
 # If Doxygen is available, use it to generate documentation.
