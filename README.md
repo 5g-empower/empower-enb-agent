@@ -1,4 +1,5 @@
 
+
 5G-EmPOWER: Mobile Networks Operating System
 ============================================
 
@@ -116,23 +117,16 @@ The documentation can then be found in `.../doc/html/index.html`.
 
 Start from `.../srsenb/src/empoweragent.cc` and `.../srsenb/hdr/empoweragent.h`, and`.../srsenb/src/main.cc` and `.../srsenb/src/enb.cc`
 
-1. The Empower agent is started in a single separate thread;
+1. The Empower agent is started in a single separate thread
 
-2. then it periodically attempts to (re)open a TCP connection to the
+2. The agent periodically attempts to (re)open a TCP connection to the
    address and port of the controller every `delay` microseconds
    (address, port and delay are specified in a new section of the
    srsenb configuration file -- see below).
 
-   If no connection can be opened, the agent performs the periodic tasks.
+3. Once a connection is opened, the agent waits up to `delayms` microseconds for an incoming message from the controller. If a message is availabile, it is received and processed immediately.
 
-3. once a connection is opened, the agent waits up to `delay` microseconds for
-   an incoming message from the controller.
-
-   If a message is availabile, it is received and processed immediately.
-
-   If no message is available, the agent performs the periodic
-   tasks. Since the connection is opened, in this case it sends to the
-   controller a HELLO message specifying just the `delay` interval.
+4. A separate thread is created to periodically send HELLO messages to the controller. The period is again specified with the `delayms` parameter
 
 The srsenb configuration has been extended with a new section for the
 Empower agent (those in the example below are the default values):
@@ -142,7 +136,6 @@ Empower agent (those in the example below are the default values):
 controller_addr = 127.0.0.1
 controller_port = 2110
 delayms = 1500
-
 ```
 ## Build
 
@@ -182,9 +175,10 @@ Description of the fields:
                        required to perform:
 
              `0`: UNDEFINED
-             `1`: CREATE/UPDATE
-             `2`: DELETE
-             `3`: RETRIEVE
+             `1`: UPDATE
+             `2`: CREATE
+             `3`: DELETE
+             `4`: RETRIEVE
     
         For replies:
 
@@ -202,7 +196,7 @@ The rest of the message is the following
     +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
     | PREAMBLE -- continued                                         |
     +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-    |Element ID                                                     |
+    | Padding                       |Element ID                     |
     +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
     |Element ID (continued)                                         |
     +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
@@ -215,7 +209,7 @@ Description of the fields:
 
     ELEMENT ID
 
-        Element identified
+        Element identified (a 48-bit Ethernet address)
 
     SEQUENCE NUMBER
 
@@ -245,18 +239,18 @@ in a Type Length Value (TLV) structure
     
 Here follows the list of currently supported actions and their encoding.
 
-| Service           | Action | 
-|-------------------|:------:|
-| Hello             |  0x01  | 
-| Capabilities      |  0x02  | 
+| Service               | Action | 
+|-----------------------|:------:|
+| HELLO                 |  0x00  | 
+| CAPABILITIES          |  0x01  | 
+| UE REPORTS            |  0x02  | 
+| UE MEASUREMENTS       |  0x03  | 
+| MAC PRB UTILIZATION   |  0x04  | 
+| HANDOVER              |  0x05  | 
 
-### Hello Service
+### Hello service
 
-The Hello message acts as both connection initiator and keepalive. 
-
-The Hello message is sent as the first message exchanged between the agent and the controller during the connection setup.
-
-The controller has the possibility to reject the agent. In this case the controller terminates the connection. 
+The Hello message acts as both connection initiator and keepalive.  The Hello message is sent as the first message exchanged between the agent and the controller during the connection setup. The controller has the possibility to reject the agent. In this case the controller terminates the connection. 
 
 Life-cycle:
 
@@ -271,10 +265,10 @@ Life-cycle:
 
 Request:
 
-    Bits 0-13: 0x01 (HELLO)
+    Bits 0-13: 0x00 (HELLO)
     Bits 14-15: 0x00 (UNDEFINED)
 
-  TLVs:
+TLVs:
 
     Hello Period
 
@@ -287,14 +281,14 @@ Request:
     Fields:
 
         PERIOD
-            The hello period of the agent
+            The hello period of the agent (in ms)
 
 Reply:
 
-    Bits 0-13: 0x01 (HELLO)
+    Bits 0-13: 0x00 (HELLO)
     Bits 14-15: 0x00/0x01 (SUCCESS/FAIL)
 
-  TLVs:
+TLVs:
 
     Hello Period
 
@@ -307,7 +301,7 @@ Reply:
     Fields:
 
         PERIOD
-            The new hello period of the agent
+            The new hello period of the agent (in ms)
 
 
 ### Capabilities Service
@@ -327,13 +321,12 @@ Life-cycle:
 
 Request:
 
-    Bits 0-13: 0x02 (CAPABILITIES)
+    Bits 0-13: 0x01 (CAPABILITIES)
     Bits 14-15: 0x00 (UNDEFINED)
 
-  TLVs:
+TLVs:
 
     No TLVs defined
-
 
 Reply:
 
@@ -347,22 +340,243 @@ Reply:
     +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
     |Type                           |Length                         |
     +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-    |dl_earfcn                                                      |
+    |DL_EARFCN                                                      |
     +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-    |n_prbs         |
-    +-+-+-+-+-+-+-+-+
+    |DL_EARFCN                                                      |
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+   
+    |PCI                            |PRB            |
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 
     Fields:
 
         DL_EARFCN
             EARFCN code for DL
+            
+        DL_EARFCN
+            EARFCN code for UL
 
-        N_PRBS
+        PCU
+            The physical cell id
+            
+        PRB
             Number of Physical Resource Blocks (6,15,25,50,75,100)
 
-## Obsolete messages (to be revised)
+### UE reports service
 
-### Handover message
+The UE report request message tells the agent to list all connected UE. The agent also sends a UE Report message every time a UE connects/disconnectes.
+
+Life-cycle:
+
+    Controller           Agent
+        | Request          |
+        +----------------->|
+        |                  |
+        |            Reply |
+        |<-----------------+
+        |                  |
+        |   Reply (new UE) |
+        |<-----------------+
+        v                  v
+
+Request:
+
+    Bits 0-13: 0x02 (UE REPORTS)
+    Bits 14-15: 0x00 (UNDEFINED)
+
+  TLVs:
+
+    No TLVs defined
+
+Reply:
+
+    Bits 0-13: 0x02 (UE REPORTS)
+    Bits 14-15: 0x00/0x01 (SUCCESS/FAIL)
+
+TLVs:
+
+    Cell Configuration
+
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    |Type                           |Length                         |
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    |IMSI                                                           |
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    |IMSI (continued)                                               |
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    |TMSI                                                           |
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    |RNTI                           |PCI                            |
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    |Status         |
+    +-+-+-+-+-+-+-+-+
+    
+    Fields:
+
+        IMSI
+            The UE IMSI
+            
+        TMSI
+            The UE TMSI
+            
+        RNTI
+            The UE RNTI
+
+        STATUS
+            The status opcode (0x1=connected, 0x2=disconnected)
+            
+        PCI
+           The physical cell id
+
+### MAC PRB utilization service
+
+The Cell measurement message is used to request cell measurements. Different measurements can be taken for each cell.
+
+Life-cycle:
+
+    Controller           Agent
+        | Request          |
+        +----------------->|
+        |                  |
+        |            Reply |
+        |<-----------------+
+        |                  |
+        v                  v
+
+Request:
+
+    Bits 0-13: 0x04 (MAC PRB UTILIZATION)
+    Bits 14-15: 0x00 (UNDEFINED)
+
+ TLVs:
+
+    No TLVs defined
+
+Reply:
+
+    Bits 0-13: 0x04 (MAC PRB UTILIZATION)
+    Bits 14-15: 0x00/0x01 (SUCCESS/FAIL)
+
+TLVs:
+
+    Cell Utilization
+
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    |Type                           |Length                         |
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    |DL_PRB_COUNTER                                                 |
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    |UL_PRB_COUNTER                                                 |
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    |PRB                           |PCI                             |
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    
+    Fields:
+
+        DL_PRB_COUNTER
+            The progressive counter of the DL PRBs scheduled so far
+            
+        UL_PRB_COUNTER
+            The progressive counter of the UL PRBs scheduled so far
+            
+        PRB
+            The PRB available on the cell
+            
+        PCI
+           The physical cell id
+
+
+### UE measurements service
+
+The UE measurement message allows to perform and retrieve information about RCC measurements performed by a UE.
+
+Life-cycle:
+
+    Controller           Agent
+        | Request (CREATE) |
+        +----------------->|
+        |                  |
+        |  Reply (MEAS_ID) |
+        |<-----------------+
+        |                  |
+        | Report (MEAS_ID) |
+        |<-----------------+
+        |                  |
+        v                  v
+
+Request:
+
+    Bits 0-13: 0x03 (UE MEASUREMENTS)
+    Bits 14-15: 0x02/0x04 (CREATE/DELETE)
+
+TLVs:
+
+    Measurement config (serving cell only)
+
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    |Type                           |Length                         |
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    |RNTI                           |INTERVAL       |AMOUNT         |
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    
+    Fields:
+
+        RNTI
+            The UE RNTI to track
+            
+        INTERVAL
+            The interval as specified by 3GPP standards
+            
+        AMOUNT
+            The number of reports as specified by 3GPP standards
+
+Reply:
+    
+    Bits 0-13: 0x03 (UE MEASUREMENTS)
+    Bits 14-15: 0x00/0x01 (SUCCESS/FAIL)
+    
+TLVs:
+
+    Measurement ID (sent back to the controller after the new measurement has been created)
+
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    |Type                           |Length                         |
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    |RNTI                           |MEAS_ID/RESULT |
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    
+    Fields:
+
+        RNTI
+            The UE RNTI to track
+            
+        MEAS_ID/RESULT 
+            The measurement ID or the error code if the measurement could not be created
+
+    Measurement Report
+
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    |Type                           |Length                         |
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    |RSRP                           |RSRQ                           |
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    |PCI                            |MEAS_ID          |
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    
+    Fields:
+
+        MEAS_ID
+            The measurement ID
+            
+        PCI
+            The physical cell id monitored 
+            
+        MEAS_ID/RESULT 
+            The measurement ID or the error code if the measurement could not be created
+        
+        RSRP/RSRQ 
+            The measurements
+            
+### Handover service
 
 The Handover message is used to trigger an X2 handover at the eNB.
 
@@ -380,10 +594,13 @@ Life-cycle:
 
 Request:
 
-    Operation: UNSPECIFIED
+    Bits 0-13: 0x05 (HANDOVER)
+    Bits 14-15: 0x00 (UNDEFINED)
 
-     0                   1                   2                   3
-     0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+TLVs
+
+    Handover trigger
+    
     +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
     |               RNTI            |         Target eNB         -->|
     +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
@@ -392,26 +609,27 @@ Request:
     |     Cause     | | | | | | | | | | | | | | | | | | | | | | | | |
     +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
     
-Fields:
+    Fields:
 
-    RNTI
-        16-bits Radio Network Temporary Identifier of the target UE.
-        
-    TARGET ENB
-        32-bits ID of the eNB where the RNTI should be transfered to.
-        
-    TARGET PCI
-        16-bits Physical Cell Identificator of the target cell.
-        
-    CAUSE
-        8-bits field which identify the cause of Handover.
+	    RNTI
+	        16-bits Radio Network Temporary Identifier of the target UE.
+	        
+	    TARGET ENB
+	        32-bits ID of the eNB where the RNTI should be transfered to.
+	        
+	    TARGET PCI
+	        16-bits Physical Cell Identificator of the target cell.
+	        
+	    CAUSE
+	        8-bits field which identify the cause of Handover.
 
 Reply:
-
-    Operation: SUCCESS/FAIL
-
-     0                   1                   2                   3
-     0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+    
+    Bits 0-13: 0x05 (HANDOVER)
+    Bits 14-15: 0x00/0x01 (SUCCESS/FAIL)
+    
+  TLVs:
+    
     +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
     |                          Source eNB                           |
     +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
@@ -420,162 +638,19 @@ Reply:
     |           Target RNTI         | | | | | | | | | | | | | | | | |
     +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
     
-Fields:
+	Fields:
 
-    SOURCE ENB
-        32-bits ID of the Handover initiator.
-        
-    ORIGIN PCI
-        16-bits Physical Cell ID of the Handover initiator.
-        
-    ORIGIN RNTI
-        16-bits original Radio Network Temporary Identifiers.
-        
-    TARGET RNTI
-        16-bits Radio Network Temporary Identifiers assumed by the UE after the
-        Handover operation. 
+	    SOURCE ENB
+	        32-bits ID of the Handover initiator.
+	        
+	    ORIGIN PCI
+	        16-bits Physical Cell ID of the Handover initiator.
+	        
+	    ORIGIN RNTI
+	        16-bits original Radio Network Temporary Identifiers.
+	        
+	    TARGET RNTI
+	        16-bits Radio Network Temporary Identifiers assumed by the UE after the
+	        Handover operation. 
 
-### Cell Measurement message
 
-The Cell measurement message is used to request cell measurements. Different measurements can be taken for each cell.
-
-Life-cycle:
-
-    Controller           Agent
-        | Request          |
-        +----------------->|
-        |                  |
-        |            Reply |
-        |<-----------------+
-        |                  |
-        v                  v
-
-Request:
-
-    Operation: ADD/SET/GET/REM
-
-     0                   1                   2                   3
-     0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
-    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-    |                   Zero or more TLV entries                    |
-    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-    
-Fields:
-
-    TLV TOKENS:
-        One of the following tokens:
-            EP_TLV_CELL_PRB_REQ
-
-Reply:
-
-    Operation: SUCCESS/FAIL
-
-     0                   1                   2                   3
-     0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
-    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-    |                   Zero or more TLV entries                    |
-    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-    
-Fields:
-
-    TLV TOKENS:
-        One of the following tokens:
-            EP_TLV_CELL_PRB_REPORT
-
-### UE report message
-
-The UE report message tells the agent to start reporting changes about the UEs connected to the eNB. Even if the IMSI field is present in the message, the particular agent implementation can decide to leave it filled with zero.
-
-This message carry a complete view of the situation, and not only a difference between two status. This means that the UEs listed here are the current ones connected through the eNB.
-
-Life-cycle:
-
-    Controller           Agent
-        | Request          |
-        +----------------->|
-        |                  |
-        |            Reply |
-        |<-----------------+
-        |                  |
-        v                  v
-
-Request:
-
-    Operation: ADD/REM
-
-     0                   1                   2                   3
-     0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
-    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-    |                             ID                                |
-    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-
-Fields:
-
-    ID
-        A generic 32-bits field used as identificator of the Hello procedure.
-        This element is currently left to 0.
-
-Reply:
-
-    Operation: SUCCESS/FAIL
-
-     0                   1                   2                   3
-     0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
-    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-    |                      UE report TLVs                           |
-    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-
-Fields:
-
-    TLV TOKENS:
-        One of the following tokens:
-            EP_TLV_UE_REP_ID
-
-### UE measurement 
-
-The UE measurement message allows to perform and retrieve information about RCC
-measurements performed by a single UE. The measurement is a RRC reconfiguration
-message issued to an UE which follows the LTE standards.
-
-Life-cycle:
-
-    Controller           Agent
-        | Request          |
-        +----------------->|
-        |                  |
-        |            Reply |
-        |<-----------------+
-        |                  |
-        v                  v
-
-Request:
-
-    Operation: ADD/SET/GET/REM
-
-     0                   1                   2                   3
-     0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
-    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-    |                   Zero or more TLV entries                    |
-    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-    
-Fields:
-
-    TLV TOKENS:
-        One of the following tokens:
-            EP_TLV_UE_RRC_MEAS_REQ
-
-Reply:
-
-    Operation: SUCCESS/FAIL
-    
-     0                   1                   2                   3
-     0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
-    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-    |                   Zero or more TLV entries                    |
-    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-    
-Fields:
-
-    TLV TOKENS:
-        One of the following tokens:
-            EP_TLV_UE_RRC_MEAS_REPORT
