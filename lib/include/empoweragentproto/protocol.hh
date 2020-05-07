@@ -39,7 +39,7 @@ enum class EntityClass : std::uint16_t {
     UE_MEASUREMENTS_SERVICE = 0x3,
 
     // This service enable MAC PRB utilization report
-	MAC_PRB_UTILIZATION_SERVICE = 0x4,
+    MAC_PRB_UTILIZATION_SERVICE = 0x4,
 
     // Add more entity types here.
 };
@@ -72,7 +72,7 @@ struct Preamble {
     ///        message should be skipped (i.e. we should read further
     ///        `(Length - 4)` bytes). This allows sending the same
     ///        message using multiple protocol versions.
-    std::uint8_t version = 2;
+    std::uint8_t version = 0;
 
     /// @brief 8-bit bitfield of flags.
     ///
@@ -92,15 +92,15 @@ struct Preamble {
     ///
     /// * bits 14-15 encode the (general) operation type that we are
     ///              required to perform:
-    ///   * `0`: SET
-    ///   * `1`: ADD
-    ///   * `2`: DEL
-    ///   * `3`: GET
+    ///   * `0`: UNDEFINED
+    ///   * `1`: UPDATE
+    ///   * `2`: CREATE
+    ///   * `3`: DELETE
+    ///   * `4`: RETRIEVE
     ///
     /// For replies:
     ///
-    /// * bit 14 is reserved for future usage and should be cleared
-    ///          (`0`).
+    /// * bit 14 is reserved for future usage and should be cleared (`0`).
     ///
     /// * bit 15 tells if this is a success or a failure/error:
     ///

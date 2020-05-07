@@ -11,11 +11,9 @@
 namespace Empower {
 namespace Agent {
 
-/// @brief The main enum assigning an ID to each TLV type.
-///
-/// When implementing new TLVs (or a new version of an existing
-/// TLV... which is really a new TLV), add a new entry here with a
-/// unique ID.
+/**
+ * @brief The main enum assigning an ID to each TLV type.
+ */
 enum class TLVType : std::uint16_t {
     /// @brief NONE is reserved
     NONE = 0x0,
@@ -24,12 +22,12 @@ enum class TLVType : std::uint16_t {
     LIST_OF_TLV = 0x3,
     BINARY_DATA = 0x4,
     PERIODICITY = 0x5,
-	CELL = 0x6,
+    CELL = 0x6,
     UE_REPORT = 0x7,
     UE_MEASUREMENTS_CONFIG = 0x8,
-	UE_MEASUREMENT_REPORT = 0x9,
-	UE_MEASUREMENT_ID = 0xB,
-	MAC_PRB_UTILIZATION_REPORT = 0xA,
+    UE_MEASUREMENT_REPORT = 0x9,
+    UE_MEASUREMENT_ID = 0xB,
+    MAC_PRB_UTILIZATION_REPORT = 0xA,
 };
 
 /**
@@ -160,9 +158,8 @@ class TLVKeyValueStringPairs : public TLVBase {
 };
 
 /**
- *
+ * @brief A list of TLVs
  */
-
 class TLVList : public TLVBase {
   public:
     TLVList();
@@ -190,7 +187,6 @@ class TLVList : public TLVBase {
 /**
  * A periodicity expressed as a number of milliseconds.
  */
-
 class TLVPeriodicityMs : public TLVBase {
   public:
     virtual ~TLVPeriodicityMs() {}
@@ -224,7 +220,6 @@ class TLVPeriodicityMs : public TLVBase {
 /**
  * The configuration of a cell
  */
-
 class TLVCell : public TLVBase {
   public:
     virtual ~TLVCell() {}
@@ -282,7 +277,6 @@ class TLVCell : public TLVBase {
 /**
  * The configuration of a cell
  */
-
 class TLVUEReport : public TLVBase {
   public:
     virtual ~TLVUEReport() {}
@@ -341,14 +335,13 @@ class TLVUEReport : public TLVBase {
         tmsiOffset = 8,
         rntiOffset = 12,
         statusOffset = 14,
-		pciOffset = 15
+        pciOffset = 15
     };
 };
 
 /**
  * The configuration of a UE Measurement
  */
-
 class TLVUEMeasurementConfig : public TLVBase {
   public:
     virtual ~TLVUEMeasurementConfig() {}
@@ -391,14 +384,13 @@ class TLVUEMeasurementConfig : public TLVBase {
     enum {
         rntiOffset = 0,
         intervalOffset = 2,
-		amountOffset = 3
+        amountOffset = 3
     };
 };
 
 /**
- * The id of a UE Measurement
+ * The ID of a UE Measurement
  */
-
 class TLVUEMeasurementId : public TLVBase {
   public:
     virtual ~TLVUEMeasurementId() {}
@@ -415,13 +407,13 @@ class TLVUEMeasurementId : public TLVBase {
 
     std::uint16_t rnti() const { return mRNTI; }
     TLVUEMeasurementId &rnti(std::uint16_t v) {
-    	mRNTI = v;
+        mRNTI = v;
         return *this;
     }
 
     std::uint8_t measId() const { return mMeasId; }
     TLVUEMeasurementId &measId(std::uint8_t v) {
-    	mMeasId = v;
+        mMeasId = v;
         return *this;
     }
 
@@ -440,7 +432,6 @@ class TLVUEMeasurementId : public TLVBase {
 /**
  * The configuration of a UE Measurement
  */
-
 class TLVMACPrbReportReport : public TLVBase {
   public:
     virtual ~TLVMACPrbReportReport() {}
@@ -457,25 +448,25 @@ class TLVMACPrbReportReport : public TLVBase {
 
     std::uint16_t nPrb() const { return mNPrb; }
     TLVMACPrbReportReport &nPrb(std::uint16_t v) {
-    	mNPrb = v;
+        mNPrb = v;
         return *this;
     }
 
     std::uint32_t dlPrbCounters() const { return mDL; }
     TLVMACPrbReportReport &dlPrbCounters(std::uint32_t v) {
-    	mDL = v;
+        mDL = v;
         return *this;
     }
 
     std::uint32_t ulPrbCounters() const { return mUL; }
     TLVMACPrbReportReport &ulPrbCounters(std::uint32_t v) {
-    	mUL = v;
+        mUL = v;
         return *this;
     }
 
     std::uint16_t pci() const { return mPCI; }
     TLVMACPrbReportReport &pci(std::uint16_t v) {
-    	mPCI = v;
+        mPCI = v;
         return *this;
     }
 
@@ -488,10 +479,10 @@ class TLVMACPrbReportReport : public TLVBase {
     std::uint16_t mPCI = 0;
 
     enum {
-    	nPrbOffset = 0,
+        nPrbOffset = 0,
         dlOffset = 2,
         ulOffset = 6,
-		pciOffset = 10,
+        pciOffset = 10,
     };
 };
 
