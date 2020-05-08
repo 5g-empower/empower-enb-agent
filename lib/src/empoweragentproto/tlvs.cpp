@@ -137,12 +137,12 @@ std::size_t TLVUEReport::encode(NetworkLib::BufferWritableView buffer) {
 }
 
 std::size_t TLVUEReport::decode(NetworkLib::BufferView buffer) {
-	mIMSI = buffer.getUint64At(imsiOffset);
-	mTMSI = buffer.getUint32At(tmsiOffset);
-	mRNTI = buffer.getUint16At(rntiOffset);
-	mStatus = buffer.getUint8At(statusOffset);
-	mPCI = buffer.getUint16At(pciOffset);
-	return 17;
+    mIMSI = buffer.getUint64At(imsiOffset);
+    mTMSI = buffer.getUint32At(tmsiOffset);
+    mRNTI = buffer.getUint16At(rntiOffset);
+    mStatus = buffer.getUint8At(statusOffset);
+    mPCI = buffer.getUint16At(pciOffset);
+    return 17;
 }
 
 /**********************************************************************/
@@ -155,10 +155,10 @@ std::size_t TLVUEMeasurementConfig::encode(NetworkLib::BufferWritableView buffer
 }
 
 std::size_t TLVUEMeasurementConfig::decode(NetworkLib::BufferView buffer) {
-	mRNTI = buffer.getUint16At(rntiOffset);
-	mInterval = buffer.getUint8At(intervalOffset);
-	mAmount = buffer.getUint8At(amountOffset);
-	return 4;
+    mRNTI = buffer.getUint16At(rntiOffset);
+    mInterval = buffer.getUint8At(intervalOffset);
+    mAmount = buffer.getUint8At(amountOffset);
+    return 4;
 }
 
 /**********************************************************************/
@@ -170,9 +170,27 @@ std::size_t TLVUEMeasurementId::encode(NetworkLib::BufferWritableView buffer) {
 }
 
 std::size_t TLVUEMeasurementId::decode(NetworkLib::BufferView buffer) {
-	mRNTI = buffer.getUint16At(rntiOffset);
-	mMeasId = buffer.getUint8At(measIdOffset);
-	return 3;
+    mRNTI = buffer.getUint16At(rntiOffset);
+    mMeasId = buffer.getUint8At(measIdOffset);
+    return 3;
+}
+
+/**********************************************************************/
+
+std::size_t TLVUEMeasurementReport::encode(NetworkLib::BufferWritableView buffer) {
+    buffer.setUint16At(rntiOffset, mRNTI);
+    buffer.setUint8At(measIdOffset, mMeasId);
+    buffer.setUint8At(rsrpOffset, mRSRP);
+    buffer.setUint8At(rsrqOffset, mRSRQ);
+    return 5;
+}
+
+std::size_t TLVUEMeasurementReport::decode(NetworkLib::BufferView buffer) {
+    mRNTI = buffer.getUint16At(rntiOffset);
+    mMeasId = buffer.getUint8At(measIdOffset);
+    mRSRP = buffer.getUint8At(rsrpOffset);
+    mRSRQ = buffer.getUint8At(rsrqOffset);
+    return 5;
 }
 
 /**********************************************************************/
@@ -186,11 +204,11 @@ std::size_t TLVMACPrbReportReport::encode(NetworkLib::BufferWritableView buffer)
 }
 
 std::size_t TLVMACPrbReportReport::decode(NetworkLib::BufferView buffer) {
-	mNPrb = buffer.getUint16At(nPrbOffset);
-	mDL = buffer.getUint32At(dlOffset);
-	mUL = buffer.getUint32At(ulOffset);
-	mPCI = buffer.getUint16At(pciOffset);
-	return 12;
+    mNPrb = buffer.getUint16At(nPrbOffset);
+    mDL = buffer.getUint32At(dlOffset);
+    mUL = buffer.getUint32At(ulOffset);
+    mPCI = buffer.getUint16At(pciOffset);
+    return 12;
 }
 
 /**********************************************************************/

@@ -430,6 +430,64 @@ class TLVUEMeasurementId : public TLVBase {
 };
 
 /**
+ * An UE Measurement report
+ */
+class TLVUEMeasurementReport : public TLVBase {
+  public:
+    virtual ~TLVUEMeasurementReport() {}
+
+    /// @name TLVBase interface
+    /// @{
+    virtual TLVType type() const override { return TLVType::UE_MEASUREMENT_REPORT; }
+    virtual std::size_t encode(NetworkLib::BufferWritableView buffer) override;
+    virtual std::size_t decode(NetworkLib::BufferView buffer) override;
+    /// @}
+
+    /// @name Getters and setters
+    /// @{
+
+    std::uint16_t rnti() const { return mRNTI; }
+    TLVUEMeasurementReport &rnti(std::uint16_t v) {
+        mRNTI = v;
+        return *this;
+    }
+
+    std::uint8_t measId() const { return mMeasId; }
+    TLVUEMeasurementReport &measId(std::uint8_t v) {
+        mMeasId = v;
+        return *this;
+    }
+
+    std::uint8_t rsrp() const { return mRSRP; }
+    TLVUEMeasurementReport &rsrp(std::uint8_t v) {
+        mRSRP = v;
+        return *this;
+    }
+
+    std::uint8_t rsrq() const { return mRSRQ; }
+    TLVUEMeasurementReport &rsrq(std::uint8_t v) {
+        mRSRQ = v;
+        return *this;
+    }
+
+    /// @}
+
+  private:
+    std::uint16_t mRNTI = 0;
+    std::uint8_t mMeasId = 0;
+    std::uint8_t mRSRP = 0;
+    std::uint8_t mRSRQ = 0;
+
+    enum {
+        rntiOffset = 0,
+        measIdOffset = 2,
+        rsrpOffset = 3,
+        rsrqOffset = 4
+    };
+
+};
+
+/**
  * The configuration of a UE Measurement
  */
 class TLVMACPrbReportReport : public TLVBase {
