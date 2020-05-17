@@ -149,16 +149,18 @@ std::size_t TLVUEReport::decode(NetworkLib::BufferView buffer) {
 
 std::size_t TLVUEMeasurementConfig::encode(NetworkLib::BufferWritableView buffer) {
     buffer.setUint16At(rntiOffset, mRNTI);
+    buffer.setUint8At(measIdOffset, mMeasId);
     buffer.setUint8At(intervalOffset, mInterval);
     buffer.setUint8At(amountOffset, mAmount);
-    return 4;
+    return 5;
 }
 
 std::size_t TLVUEMeasurementConfig::decode(NetworkLib::BufferView buffer) {
     mRNTI = buffer.getUint16At(rntiOffset);
+    mMeasId = buffer.getUint8At(measIdOffset);
     mInterval = buffer.getUint8At(intervalOffset);
     mAmount = buffer.getUint8At(amountOffset);
-    return 4;
+    return 5;
 }
 
 /**********************************************************************/

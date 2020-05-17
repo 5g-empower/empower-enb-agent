@@ -358,13 +358,19 @@ class TLVUEMeasurementConfig : public TLVBase {
 
     std::uint16_t rnti() const { return mRNTI; }
     TLVUEMeasurementConfig &rnti(std::uint16_t v) {
-    	mRNTI = v;
+        mRNTI = v;
+        return *this;
+    }
+
+    std::uint8_t measId() const { return mMeasId; }
+    TLVUEMeasurementConfig &measId(std::uint8_t v) {
+        mMeasId = v;
         return *this;
     }
 
     std::uint8_t interval() const { return mInterval; }
     TLVUEMeasurementConfig &interval(std::uint8_t v) {
-    	mInterval = v;
+        mInterval = v;
         return *this;
     }
 
@@ -378,13 +384,15 @@ class TLVUEMeasurementConfig : public TLVBase {
 
   private:
     std::uint16_t mRNTI = 0;
+    std::uint8_t mMeasId = 0;
     std::uint8_t mInterval = 0;
     std::uint8_t mAmount = 0;
 
     enum {
         rntiOffset = 0,
-        intervalOffset = 2,
-        amountOffset = 3
+        measIdOffset = 2,
+        intervalOffset = 3,
+        amountOffset = 4
     };
 };
 
