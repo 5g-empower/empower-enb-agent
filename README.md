@@ -132,10 +132,10 @@ The srsenb configuration has been extended with a new section for the
 Empower agent (those in the example below are the default values):
 
 ```
-[empoweragent]
-controller_addr = 127.0.0.1
-controller_port = 2110
-delayms = 1500
+[agent]
+address = 127.0.0.1
+port = 2110
+delay = 1500
 ```
 ## Build
 
